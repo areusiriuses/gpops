@@ -1,0 +1,10 @@
+%-------------------------------------------%
+% BEGIN: function biyeshejiEndpoint.m %
+%-------------------------------------------%
+function output = biyeshejiEndpoint(input);
+xf=input.phase(1).finalstate(4);
+output.objective = -xf;
+
+%-------------------------------------------%
+% END: function brachistochroneEndpoint.m   %
+%-------------------------------------------%
