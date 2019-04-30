@@ -1,0 +1,67 @@
+%---------------------------------------------%
+% BEGIN: function biyeshejiContinuous.m %
+%---------------------------------------------%
+function phaseout = biyeshejiContinuoustest(input);
+%%%%%%%%%%%%%%%%%%%auxiliary data%%%%%%%%%%%%%%%%%%
+s=input.auxdata.s;
+m=input.auxdata.m;
+jz=input.auxdata.jz;
+l=input.auxdata.l;
+p=input.auxdata.p;
+%%%%%%%%%%%%%%%%%%%input%%%%%%%%%%%%%%%%%%
+t = input.phase.time;
+v = input.phase.state(:,1);
+theta = input.phase.state(:,2);
+omegaz= input.phase.state(:,3);
+x= input.phase.state(:,4);
+y= input.phase.state(:,5);
+thi= input.phase.state(:,6);
+u = input.phase.control;
+%    dv/dt = (p*cos(alpha)-fx-m*g*sin(theta))/m     %
+%    dtheta/dt =(p*sin(alpha)+fy-m*g*cos(theta))/(m*v)%
+%    domegaz/dt =mz/jz                              %
+%    dx/dt =  v*cos(theta)                          %
+%    dy/dt = v*sin(theta)                           %
+%    dthi/dt =omegaz                                %
+%    alpha=thi-theta                                %
+%%%%%%%%%%%%%%%%%%%parameters%%%%%%%%%%%%%%%%%%
+s=0.1;
+r0=6378000;rou0=1.225;
+tt=288.15-0.00665.*y;
+g=9.80665./(1+y./r0);
+rou=rou0.*(tt./288.15).^4.25588;
+c=20.0468.*sqrt(tt);
+%aoa 
+aoa=u.*57.3;
+ma=v./c;
+[aoa,ma]=meshgrid(aoa,ma);
+%%%%%%%%%%%%%%%%%%%%%%interpolation%%%%%%%%%%%%%%%%%%
+load x1.mat
+load y1.mat
+load z1.mat
+load z2.mat
+load z3.mat
+cx= interp2(x1,y1,z1,aoa,ma,'linerest');
+cy= interp2(x1,y1,z2,aoa,ma,'linerest');
+cm= interp2(x1,y1,z3,aoa,ma,'linerest');
+q=0.5*rou.*v.^2;
+fx=cx.*q.*s;
+fy=cy.*q.*s;
+mz=cm.*q.*s.*l;
+%%%%%%%%%%%%%%%%System model%%%%%%%%%%%%%
+dv = (p.*cos(u)-fx-m.*g.*sin(theta))./m;
+dtheta =(p.*sin(u)+fy-m.*g.*cos(theta))./(m.*v);
+domegaz =mz./jz;
+dx =  v.*cos(theta);
+dy =  v.*sin(theta);
+dthi =omegaz;
+%%%%%%%%%%%%%%%%path constraints%%%%%%%%%%%%%%%%
+% ny     =  v./g.*dtheta+cos(theta);	
+% du     =  dthi-dtheta;
+pathu  =  thi-theta-u;
+phaseout.dynamics = [dv,dtheta,domegaz,dx,dy,dthi];
+% phaseout.path = [ny,du,pathu];
+phaseout.path = pathu;
+%---------------------------------------------%
+% BEGIN: function brachistochroneContinuous.m %
+%---------------------------------------------%
